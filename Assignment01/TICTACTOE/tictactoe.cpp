@@ -80,6 +80,8 @@ int main() {
     return 0;
 }
 
+// ERROR CHECKING FOR IDIOTS
+
 // grid of dots instead of spaces
 // clear previous input from the console
 // start again after a win option
