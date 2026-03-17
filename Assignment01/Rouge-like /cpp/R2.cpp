@@ -129,6 +129,7 @@ void selectroomsize(room &room)
 int main()
 {
 room room;
+std::cout << "hello" << std::endl;
 selectroomsize(room);
 player playerpos{0,0};
 printroom(room, playerpos);
