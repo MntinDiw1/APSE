@@ -55,10 +55,6 @@ class DataGenerator {
 
 // Simple Linear Regression using Least Squares
 void performLinearRegression(const std::vector<Coordinate>& data) {
-    if (data.empty()) {
-        std::cout << "No data for regression." << std::endl;
-        return;
-    }
 
     double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
     int n = data.size();
@@ -70,13 +66,7 @@ void performLinearRegression(const std::vector<Coordinate>& data) {
         sumX2 += point.x * point.x;
     }
 
-    double denominator = n * sumX2 - sumX * sumX;
-    if (std::abs(denominator) < 1e-10) {
-        std::cout << "Warning: Cannot compute slope (degenerate data)." << std::endl;
-        return;
-    }
-
-    double slope = (n * sumXY - sumX * sumY) / denominator;
+    double slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     double intercept = (sumY - slope * sumX) / n;
 
     std::cout << "\n=== Linear Regression Results ===" << std::endl;
@@ -84,7 +74,6 @@ void performLinearRegression(const std::vector<Coordinate>& data) {
     std::cout << "Fitted intercept (m): " << intercept << std::endl;
     std::cout << "Original values were: slope = 2.0, intercept = 5.0" << std::endl;
 }
-
 
 
 
