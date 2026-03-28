@@ -1,9 +1,9 @@
 //NOTE: put into main and seperate into header files etc later on.
-
 #include<iostream>
 #include<vector>
 #include<random>
 #include<fstream> 
+#include "matplotlibcpp.h"
 
 // Create a struct to bundle coordinate data together
 struct Coordinate {
@@ -66,6 +66,7 @@ void performLinearRegression(const std::vector<Coordinate>& data) {
         sumX2 += point.x * point.x;
     }
 
+
     double slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     double intercept = (sumY - slope * sumX) / n;
 
@@ -73,6 +74,38 @@ void performLinearRegression(const std::vector<Coordinate>& data) {
     std::cout << "Fitted slope (k):     " << slope << std::endl;
     std::cout << "Fitted intercept (m): " << intercept << std::endl;
     std::cout << "Original values were: slope = 2.0, intercept = 5.0" << std::endl;
+
+    // ================== PLOTTING CODE (commented out for now) ==================
+ 
+    namespace plt = matplotlibcpp;
+
+    std::vector<double> x_vals, y_vals, y_fit;
+
+    for (const auto& point : data) {
+        x_vals.push_back(point.x);
+        y_vals.push_back(point.y);
+        y_fit.push_back(fitted_slope * point.x + fitted_intercept);
+    }
+
+    plt::figure_size(900, 600);
+    plt::scatter(x_vals, y_vals, 60, "blue");           // original data points
+    plt::plot(x_vals, y_fit, "r-", 2.5);                // fitted regression line (red)
+
+    plt::xlabel("x values");
+    plt::ylabel("y values");
+    plt::title("Linear Regression - Generated Data vs Fitted Line");
+    plt::grid(true);
+    plt::legend({"Generated Data Points", "Fitted Line (slope=" + std::to_string(fitted_slope) + ")"});
+
+    plt::save("linear_regression_plot.png");
+    std::cout << "Plot saved as: linear_regression_plot.png" << std::endl;
+    plt::show();
+    
+    // ===========================================================================
+
+
+
+
 }
 
 
@@ -91,6 +124,7 @@ int main() {
     std::cout << "\n.csv FILE CREATED" << std::endl;
 
     performLinearRegression(dataset);
+
   
 }
 
