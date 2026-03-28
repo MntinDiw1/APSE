@@ -3,7 +3,7 @@
 #include<vector>
 #include<random>
 #include<fstream> 
-#include "matplotlibcpp.h"
+
 
 // Create a struct to bundle coordinate data together
 struct Coordinate {
@@ -54,7 +54,8 @@ class DataGenerator {
 
 
 // Simple Linear Regression using Least Squares
-void performLinearRegression(const std::vector<Coordinate>& data) {
+void performLinearRegression(const std::vector<Coordinate>& data, 
+                             double& slope, double& intercept) {
 
     double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
     int n = data.size();
@@ -67,66 +68,42 @@ void performLinearRegression(const std::vector<Coordinate>& data) {
     }
 
 
-    double slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    double intercept = (sumY - slope * sumX) / n;
+    slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    intercept = (sumY - slope * sumX) / n;
 
     std::cout << "\n=== Linear Regression Results ===" << std::endl;
     std::cout << "Fitted slope (k):     " << slope << std::endl;
     std::cout << "Fitted intercept (m): " << intercept << std::endl;
     std::cout << "Original values were: slope = 2.0, intercept = 5.0" << std::endl;
 
-    // ================== PLOTTING CODE (commented out for now) ==================
- 
-    namespace plt = matplotlibcpp;
-
-    std::vector<double> x_vals, y_vals, y_fit;
-
-    for (const auto& point : data) {
-        x_vals.push_back(point.x);
-        y_vals.push_back(point.y);
-        y_fit.push_back(fitted_slope * point.x + fitted_intercept);
-    }
-
-    plt::figure_size(900, 600);
-    plt::scatter(x_vals, y_vals, 60, "blue");           // original data points
-    plt::plot(x_vals, y_fit, "r-", 2.5);                // fitted regression line (red)
-
-    plt::xlabel("x values");
-    plt::ylabel("y values");
-    plt::title("Linear Regression - Generated Data vs Fitted Line");
-    plt::grid(true);
-    plt::legend({"Generated Data Points", "Fitted Line (slope=" + std::to_string(fitted_slope) + ")"});
-
-    plt::save("linear_regression_plot.png");
-    std::cout << "Plot saved as: linear_regression_plot.png" << std::endl;
-    plt::show();
-    
-    // ===========================================================================
-
-
-
-
-}
+};
 
 
 
 int main() {
+    double target_k = 2.0;
+    double target_m = 5.0;
 
-    DataGenerator mainGen(20, 2, 5, 1);
-    std::vector<Coordinate> dataset = mainGen.CreateData(); 
+    DataGenerator mainGen(20, target_k, target_m, 2.0); // Increased noise for visibility
+    std::vector<Coordinate> dataset = mainGen.CreateData();
 
-    // Write dataset to CSV file
+    double fitted_slope = 0.0;
+    double fitted_intercept = 0.0;
+    performLinearRegression(dataset, fitted_slope, fitted_intercept);
+
     std::ofstream outFile("LinearDataset.csv");
-    for (const auto& point : dataset) {
-        outFile << point.x << "," << point.y << "\n";
+    if (outFile.is_open()) {
+        outFile << "x,y,f_slope,f_intercept\n";
+        for (const auto& point : dataset) {
+            outFile << point.x << "," << point.y << "," << fitted_slope << "," << fitted_intercept << "\n";
+        }
+        outFile.close();
+        std::cout << "\nLinearDataset.csv created successfully." << std::endl;
     }
-    outFile.close();
-    std::cout << "\n.csv FILE CREATED" << std::endl;
 
-    performLinearRegression(dataset);
-
-  
+    return 0;
 }
+
 
 
 
