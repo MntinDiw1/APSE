@@ -57,19 +57,19 @@ class DataGenerator {
 void performLinearRegression(const std::vector<Coordinate>& data, 
                              double& slope, double& intercept) {
 
-    double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
-    int n = data.size();
+    double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0; 
+    int n = data.size(); // number of data points
 
     for (const auto& point : data) {
-        sumX += point.x;
-        sumY += point.y;
-        sumXY += point.x * point.y;
-        sumX2 += point.x * point.x;
+        sumX += point.x; // sigma x i=1 to m
+        sumY += point.y; // sigma y i=1 to m
+        sumXY += point.x * point.y; //  sigma x*y i=1 to m
+        sumX2 += point.x * point.x; // sigma x^2 i=1 to m
     }
 
 
-    slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    intercept = (sumY - slope * sumX) / n;
+    slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX); // w*
+    intercept = (sumY - slope * sumX) / n; // b*
 
     std::cout << "\n=== Linear Regression Results ===" << std::endl;
     std::cout << "Fitted slope (k):     " << slope << std::endl;
@@ -77,6 +77,26 @@ void performLinearRegression(const std::vector<Coordinate>& data,
     std::cout << "Original values were: slope = 2.0, intercept = 5.0" << std::endl;
 
 };
+
+void gradient_descant(const std::vector<Coordinate>& data, double& slope, double& intercept, double learning_rate, int iterations) {
+    int n = data.size();
+
+    for (int iter = 0; iter < iterations; ++iter) {
+        double slope_gradient = 0.0;
+        double intercept_gradient = 0.0;
+
+        for (const auto& point : data) {
+            double prediction = slope * point.x + intercept;
+            double error = prediction - point.y;
+            slope_gradient += error * point.x; // dL/dk
+            intercept_gradient += error; // dL/dm
+        }
+
+        // Update parameters
+        slope -= (learning_rate / n) * slope_gradient;
+        intercept -= (learning_rate / n) * intercept_gradient;
+    }
+}
 
 
 
