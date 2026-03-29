@@ -2,16 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-# Use the EXACT name from your screenshot
 filename = 'LinearDataset.csv'
+output_plot = 'LinearRegressionPlot.png'
 
 if not os.path.exists(filename):
     print(f"!!! ERROR: {filename} not found.")
-    print(f"Current Directory: {os.getcwd()}")
-    print(f"Files actually here: {os.listdir('.')}")
 else:
-    # Load data - Column 0:x, 1:y, 2:slope, 3:intercept
-    # We skip the header row
+    # Load data
     data = np.loadtxt(filename, delimiter=',', skiprows=1)
     
     x = data[:, 0]
@@ -26,11 +23,18 @@ else:
     # Plot
     plt.figure(figsize=(10, 6))
     plt.scatter(x, y, color='blue', label='Generated Data')
-    plt.plot(line_x, line_y, color='red', label=f'Solution: y = {m:.2f}x + {b:.2f}')
+    plt.plot(line_x, line_y, color='red', linewidth=2, label=f'Solution: y = {m:.2f}x + {b:.2f}')
     
-    plt.title("C++ Normal Equation Result")
+    plt.title("Gradient Descent Result (C++)")
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.legend()
-    plt.grid(True)
-    plt.show()
+    plt.grid(True, alpha=0.3)
+
+    # SAVE the plot to the same folder
+    plt.savefig(output_plot, dpi=300) 
+    print(f"Success: Plot saved as {output_plot}")
+    
+    # Optional: Keep show() if you still want the window to pop up
+    # plt.show() 
+    plt.close()
