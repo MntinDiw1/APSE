@@ -53,7 +53,7 @@ class DataGenerator {
 
 
 
-// Simple Linear Regression using Least Squares
+// Simple Linear Regression using Least Squares, NO EIGAN VALUES
 void performLinearRegression(const std::vector<Coordinate>& data, 
                              double& slope, double& intercept) {
 
@@ -78,25 +78,44 @@ void performLinearRegression(const std::vector<Coordinate>& data,
 
 };
 
-void gradient_descant(const std::vector<Coordinate>& data, double& slope, double& intercept, double learning_rate, int iterations) {
+void performGradientDescent(const std::vector<Coordinate>& data, 
+                            double& w, double& b, 
+                            double learning_rate, int epochs) {
     int n = data.size();
+    
+    // Initial values (Start at the top of the mountain)
+    w = 0.0;
+    b = 0.0;
 
-    for (int iter = 0; iter < iterations; ++iter) {
-        double slope_gradient = 0.0;
-        double intercept_gradient = 0.0;
+    for (int i = 0; i < epochs; ++i) {
+        double dL_dw = 0.0; // The gradient for slope
+        double dL_db = 0.0; // The gradient for intercept
 
+        // 1. Calculate the TOTAL gradient for this step
         for (const auto& point : data) {
-            double prediction = slope * point.x + intercept;
+            double prediction = (w * point.x) + b;
             double error = prediction - point.y;
-            slope_gradient += error * point.x; // dL/dk
-            intercept_gradient += error; // dL/dm
+
+            // These formulas come directly from your Equation 7 and 8
+            dL_dw += error * point.x;
+            dL_db += error;
         }
 
-        // Update parameters
-        slope -= (learning_rate / n) * slope_gradient;
-        intercept -= (learning_rate / n) * intercept_gradient;
+        // 2. Update the parameters (The "Step" downhill)
+        // We multiply by 2/n to get the average derivative of the MSE
+        w -= (1.0 / n) * learning_rate * dL_dw;
+        b -= (1.0 / n) * learning_rate * dL_db;
     }
+     
+    std::cout << "\n=== Linear Regression Results ===" << std::endl;
+    std::cout << "Fitted slope (k):     " << w << std::endl;
+    std::cout << "Fitted intercept (m): " << b << std::endl;
+    std::cout << "Original values were: slope = 2.0, intercept = 5.0" << std::endl;
 }
+
+
+
+
 
 
 
@@ -111,11 +130,16 @@ int main() {
     double fitted_intercept = 0.0;
     performLinearRegression(dataset, fitted_slope, fitted_intercept);
 
+
+    double Gfitted_slope = 0.0;
+    double Gfitted_intercept = 0.0;
+    performGradientDescent(dataset, Gfitted_slope, Gfitted_intercept, .01, 100);
+
     std::ofstream outFile("LinearDataset.csv");
     if (outFile.is_open()) {
-        outFile << "x,y,f_slope,f_intercept\n";
+        outFile << "x,y,f_slope,f_intercept,Gfitted_slope,Gfitted_intercept\n";
         for (const auto& point : dataset) {
-            outFile << point.x << "," << point.y << "," << fitted_slope << "," << fitted_intercept << "\n";
+            outFile << point.x << "," << point.y << "," << fitted_slope << "," << fitted_intercept << "," << Gfitted_slope << "," << Gfitted_intercept << "\n";
         }
         outFile.close();
         std::cout << "\nLinearDataset.csv created successfully." << std::endl;
