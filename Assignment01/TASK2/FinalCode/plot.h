@@ -1,12 +1,13 @@
 #ifndef PLOT_H
 #define PLOT_H
-#define WITHOUT_NUMPY
+#define WITHOUT_NUMPY 
 
+// plot.h - Header file for the Plot class that handles plotting of data and regression lines using matplotlib-cpp
 #include <vector>
 #include <iostream>
 #include "coordinate.h"
 #include "matplotlibcpp.h"
-namespace plt = matplotlibcpp;
+namespace plt = matplotlibcpp; 
 
 class Plot { // Class to handle plotting of data and regression lines
 public:
@@ -46,6 +47,9 @@ public:
         plt::xlabel("x");
         plt::ylabel("y");
         plt::show();
+
+        // Save plot as an image file
+        plt::save("linear_regression_plot.png");
 
     }
 };
