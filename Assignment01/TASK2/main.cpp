@@ -7,6 +7,7 @@
 #include "linearregression.h"  // Joel's code for linear regression NO EIGEN VECTORS 
 #include "coordinate.h" //idk if this is needed as a header file or if it can just be a struct in the main file, but I put it in a header file for now.
 #include "dataset.h" // Will's code for dataset generation 
+#include "plot.h" // Saad's code for plotting the data and regression lines
 
 
 int main() {
@@ -24,7 +25,11 @@ int main() {
     // Task 2 implementation
     LinearRegression::performGradientDescent(dataset, Gfitted_slope, Gfitted_intercept, 0.001, 5000);
 
+    // Plotting the results
+    Plot::plotData(dataset, fitted_slope, fitted_intercept, Gfitted_slope, Gfitted_intercept);
+    /*
     // Save results to CSV file
+    std::ofstream outFile("LinearDataset.csv");
     if (outFile.is_open()) {
         outFile << "x,y,f_slope,f_intercept,Gfitted_slope,Gfitted_intercept\n";
         for (const auto& point : dataset) {
@@ -35,7 +40,7 @@ int main() {
         outFile.close();
         std::cout << "\nLinearDataset.csv created successfully." << std::endl;
     }
-
+    */
     //possibly create new linear regression header file that uses Eigen vectors to perform the same calculations as the current linear regression header file, but using Eigen vectors instead of for loops SAAD CAN DO THIS LOLLOLOLOL. 
 
     return 0;
