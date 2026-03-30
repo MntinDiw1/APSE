@@ -4,50 +4,81 @@
 #include<vector>
 #include<random>
 #include<fstream> 
-#include "linearregression.h"  // Joel's code for linear regression NO EIGEN VECTORS 
-#include "coordinate.h" //idk if this is needed as a header file or if it can just be a struct in the main file, but I put it in a header file for now.
-#include "dataset.h" // Will's code for dataset generation 
+#include "linearregression.h"  // Joel's code for linear regression NO EIGEN VECTORS, updated by Saad to do linear regression with two x values and one y value
+#include "coordinate.h" // Joel's code for the Coordinate struct, which bundles x and y values together, updated by Saad to have two x values for the multipoint dataset
+#include "dataset.h" // Will's code for dataset generation, Updated by Saad to generate a multipoint dataset with two x values and one y value
 #include "plot.h" // Saad's code for plotting the data and regression lines
 
-
 int main() {
-    DataGenerator mainGen(20, 2.0, 5.0, 2.0);  // 20 data points, slope of 2.0, intercept of 5.0, noise range of 2.0
-    std::vector<Coordinate> dataset = mainGen.CreateData(); 
+    DataGenerator mainGen;
 
-    // NORMAL SOLUTION 
-    double fitted_slope = 0.0, fitted_intercept = 0.0; 
-    // Calling via class scope
-    LinearRegression::performLinearRegression(dataset, fitted_slope, fitted_intercept);
+    // TASK 2.1: 1D LINEAR REGRESSION (Single Variable)
+    std::cout << "========== 1D LINEAR REGRESSION ==========" << std::endl;
+    double true_w1_1d = 3.0;
+    double true_b_1d = 4.0;
+    std::cout << "Hypothetical/True Weights -> Intercept: " << true_b_1d << " | Slope: " << true_w1_1d << std::endl;
+    // Generate a single x value dataset with the specified parameters
+    mainGen.singlepointGen(20, true_w1_1d, true_b_1d, 2.0); 
+    std::vector<coordinate> dataset_1d = mainGen.CreateSinglepointData(); 
+    // Perform OLS and GD on the 1D dataset
+    std::vector<double> w_ols_1d;
+    double b_ols_1d = 0.0;
+    LinearRegression::performLinearRegression(dataset_1d, w_ols_1d, b_ols_1d);
 
+    std::vector<double> w_gd_1d;
+    double b_gd_1d = 0.0;
+    LinearRegression::performGradientDescent(dataset_1d, w_gd_1d, b_gd_1d, 0.001, 5000);
 
-    // GRADIENT DESCENT SOLUTION
-    double Gfitted_slope = 0.0, Gfitted_intercept = 0.0;
-    // Task 2 implementation
-    LinearRegression::performGradientDescent(dataset, Gfitted_slope, Gfitted_intercept, 0.001, 5000);
+    // Print delta between true and estimated weights and intercept for 1D OLS and GD
+    std::cout << "\n=== 1D OLS Weight Differences ===\n";
+    std::cout << "Delta Intercept: " << std::abs(true_b_1d - b_ols_1d) << "\n";
+    std::cout << "Delta w1: " << std::abs(true_w1_1d - w_ols_1d[0]) << "\n";
 
-    // Plotting the results
-    Plot::plotData(dataset, fitted_slope, fitted_intercept, Gfitted_slope, Gfitted_intercept);
-    /*
-    // Save results to CSV file
-    std::ofstream outFile("LinearDataset.csv");
-    if (outFile.is_open()) {
-        outFile << "x,y,f_slope,f_intercept,Gfitted_slope,Gfitted_intercept\n";
-        for (const auto& point : dataset) {
-            outFile << point.x << "," << point.y << "," 
-                    << fitted_slope << "," << fitted_intercept << ","  // kinda convaluted here but it works, just writing the same slope and intercept for each data point, since they are the same for all points
-                    << Gfitted_slope << "," << Gfitted_intercept << "\n"; //did this so that all results are in the same file to make it easier to pass to python for plotting
-        }
-        outFile.close();
-        std::cout << "\nLinearDataset.csv created successfully." << std::endl;
+    // Plotting the 1D results
+    Plot::plotData1D(dataset_1d, w_ols_1d, b_ols_1d, w_gd_1d, b_gd_1d);
+
+    // ==========================================
+    // TASK 2.2: 2D LINEAR REGRESSION (Multiple Variables)
+    // ==========================================
+    std::cout << "\n========== 2D LINEAR REGRESSION ==========" << std::endl;
+    double true_w1_2d = 2.0;
+    double true_w2_2d = 1.0;
+    double true_b_2d = 5.0;
+    std::cout << "Hypothetical/True Weights -> Intercept: " << true_b_2d << " | Slopes: " << true_w1_2d << " " << true_w2_2d << std::endl;
+
+    mainGen.multipointGen(20, true_w1_2d, true_w2_2d, true_b_2d, 2.0);  
+    std::vector<coordinate> dataset_2d = mainGen.CreateMultipointData(); 
+
+    std::vector<double> w_ols_2d;
+    double b_ols_2d = 0.0;
+    LinearRegression::performLinearRegression(dataset_2d, w_ols_2d, b_ols_2d);
+
+    std::vector<double> w_gd_2d;
+    double b_gd_2d = 0.0;
+    LinearRegression::performGradientDescent(dataset_2d, w_gd_2d, b_gd_2d, 0.001, 5000);
+
+    // Print delta between true and estimated weights and intercept for 2D OLS and GD
+    std::cout << "\n=== 2D OLS Weight Differences ===\n";
+    std::cout << "Delta Intercept: " << std::abs(true_b_2d - b_ols_2d) << "\n";
+    for (size_t i = 0; i < w_ols_2d.size(); ++i) {
+        std::cout << "Delta w" << i + 1 << ": " << std::abs((i == 0 ? true_w1_2d : true_w2_2d) - w_ols_2d[i]) << "\n";
     }
-    */
-    //possibly create new linear regression header file that uses Eigen vectors to perform the same calculations as the current linear regression header file, but using Eigen vectors instead of for loops SAAD CAN DO THIS LOLLOLOLOL. 
 
+    std::cout << "\n=== 2D GD Weight Differences ===\n";
+    std::cout << "Delta Intercept: " << std::abs(true_b_2d - b_gd_2d) << "\n";
+    for (size_t i = 0; i < w_gd_2d.size(); ++i) {
+        std::cout << "Delta w" << i + 1 << ": " << std::abs((i == 0 ? true_w1_2d : true_w2_2d) - w_gd_2d[i]) << "\n";
+    }
+
+    // Plotting the 2D results
+    Plot::plotData(dataset_2d, w_ols_2d, b_ols_2d, w_gd_2d, b_gd_2d);
+
+    
+    // NOTE: If you want to fix the CSV export, you need to loop through dataset_2d
+    // and extract point.x[0] and point.x[1] individually, rather than just point.x.
+    
     return 0;
 }
-
-
-
 
     /*
     References:
