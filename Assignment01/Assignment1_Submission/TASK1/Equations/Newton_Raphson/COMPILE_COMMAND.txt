@@ -1,0 +1,2 @@
+This was a gemini special but, i got into a dependancy spiral and kind of got tired so i used this to compile:
+g++ Newton_Raphson.cpp -o a.out $(python3-config --includes) -I$(python3 -c "import numpy; print(numpy.get_include())") $(python3-config --ldflags --embed)
