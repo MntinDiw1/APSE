@@ -1,3 +1,0 @@
-Assignment requirements
-
-How did we implement Linear regression 

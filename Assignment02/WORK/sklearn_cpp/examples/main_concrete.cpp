@@ -51,9 +51,7 @@ int main()
     //    A very small learning rate is needed because the input features
     //    span 2-3 orders of magnitude (e.g. cement ~ 500, age ~ 28).
     // ------------------------------------------------------------------
-    sklearn_cpp::linear_model::LinearRegression model(
-        /*learning_rate=*/1e-7,
-        /*n_iterations=*/10000);
+    sklearn_cpp::linear_model::LinearRegression model;
 
     std::cout << "Training LinearRegression...\n";
     model.fit(X, y);
