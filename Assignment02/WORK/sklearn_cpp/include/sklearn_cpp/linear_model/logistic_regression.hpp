@@ -1,338 +1,222 @@
 #pragma once
 
-/*
- * logistic_regression.hpp
- * =======================
- * Mirrors sklearn.linear_model.LogisticRegression from Python.
- *
- * Detects K (number of classes) from the unique values in y and
- * dispatches to either the binary or the multi-class implementation.
- *
- *     Binary case (K = 2):
- *         model:    y_hat = sigmoid(w . x + b)
- *         loss:     BCE  + L2 regularisation
- *
- *     Multi-class case (K > 2):
- *         model:    y_hat_k = softmax_k(W_k . x + b_k)   for k = 0..K-1
- *         loss:     categorical cross-entropy + L2 regularisation
- *
- * Maintained by:
- *     Person B  -> the binary path  (fit_binary_, predict_binary_)
- *     Person C  -> the multi path   (fit_multiclass_, predict_multiclass_)
- *
- * The public interface (fit, predict, score) is shared and already wired up.
- * Both of you just implement the two private "*_impl" functions below.
- * ----------------------------------------------------------------------
- */
-
 #include <algorithm>
 #include <cmath>
 #include <set>
 #include <stdexcept>
 #include <vector>
 
-#include "metrics.hpp"
+#include "sklearn_cpp/utils/metrics.hpp"
 
 namespace sklearn_cpp {
 namespace linear_model {
 
+// Class to perform logistic regression for both binary and multi-class problems
 class LogisticRegression {
 public:
-        // Construct a new LogisticRegression object
-        LogisticRegression(double learning_rate = 0.1,
-                                            int    n_iterations  = 1000,
-                                            double lambda        = 0.01)
-                : learning_rate_(learning_rate),
-                    n_iterations_(n_iterations),
-                    lambda_(lambda),
-                    n_classes_(0),
-                    bias_binary_(0.0) {}
+    // Construct with chosen learning rate, epochs, and L2 regularisation strength
+    LogisticRegression(double learning_rate = 0.1, int epochs = 1000, double lambda = 0.01)
+        : learning_rate(learning_rate), epochs(epochs), lambda(lambda),
+          n_classes(0), b_bin(0.0) {}
 
-    // ----------------------------------------------------------------
-    //  Public API -- shared dispatch.  Don't modify these unless you
-    //  also update both private implementations.
-    // ----------------------------------------------------------------
-
-    
-        // * Train the model.  Detects K from y and dispatches.
+    // Train the model - detects number of classes from y and runs the appropriate path
     void fit(const std::vector<std::vector<double>>& X,
-             const std::vector<double>&              y)
-    {
-        // Count distinct integer labels in y
-        std::set<int> unique;   
+             const std::vector<double>& y) {
+        std::set<int> unique;
         for (double v : y) unique.insert(static_cast<int>(v));
-        n_classes_ = static_cast<int>(unique.size());
+        n_classes = static_cast<int>(unique.size());
 
-        if (n_classes_ < 2)
-            throw std::invalid_argument(
-                "LogisticRegression: need at least 2 classes in y");
+        if (n_classes < 2)
+            throw std::invalid_argument("LogisticRegression needs at least 2 classes in y");
 
-        if (n_classes_ == 2)
-            fit_binary_(X, y);
-        else
-            fit_multiclass_(X, y);
+        if (n_classes == 2) fit_binary(X, y);
+        else                fit_multiclass(X, y);
     }
 
-    /**
-     * Predict integer class labels for new samples.
-     */
-    std::vector<int> predict(const std::vector<std::vector<double>>& X) const
-    {
-        if (n_classes_ == 2)
-            return predict_binary_(X);
-        return predict_multiclass_(X);
+    // Predict integer class labels for new samples
+    std::vector<int> predict(const std::vector<std::vector<double>>& X) const {
+        if (n_classes == 2) return predict_binary(X);
+        return predict_multiclass(X);
     }
 
-    /**
-     * Classification accuracy on (X, y_true).
-     */
+    // Return classification accuracy on the training set
     double score(const std::vector<std::vector<double>>& X,
-                 const std::vector<double>&              y_true) const
-    {
+                 const std::vector<double>& y_true) const {
         return utils::accuracy_score(y_true, predict(X));
     }
 
-    int n_classes() const { return n_classes_; }
+    // Accessor for the number of classes detected during fit
+    int num_classes() const { return n_classes; }
 
-    // ----------------------------------------------------------------
-    //  Math helpers -- inline static so they can be used by either
-    //  implementation freely.
-    // ----------------------------------------------------------------
+private:
+    double learning_rate;
+    int epochs;
+    double lambda;
+    int n_classes;
 
-    /**
-     * Numerically stable sigmoid:   sigma(z) = 1 / (1 + exp(-z))
-     */
-    static double sigmoid(double z)
-    {
-        // Guard against overflow for very negative z
+    // Binary path: one weight vector and one scalar bias
+    std::vector<double> w_bin;
+    double b_bin;
+
+    // Multi-class path: one weight vector per class and one bias per class
+    std::vector<std::vector<double>> W;
+    std::vector<double> B;
+
+    // Numerically stable sigmoid that avoids overflow for large negative z
+    static double sigmoid(double z) {
         if (z >= 0.0) {
-            const double ez = std::exp(-z);
-            return 1.0 / (1.0 + ez);
+            return 1.0 / (1.0 + std::exp(-z));
         } else {
-            const double ez = std::exp(z);
+            double ez = std::exp(z);
             return ez / (1.0 + ez);
         }
     }
 
-    /**
-     * Numerically stable softmax over a single sample's K raw scores.
-     * Subtracts max(z) before exponentiation to avoid overflow.
-     */
-    static std::vector<double> softmax(const std::vector<double>& z)
-    {
-        std::vector<double> out(z.size());
-
-        // 1) find max for numerical stability
+    // Numerically stable softmax that subtracts the max before exponentiating
+    static std::vector<double> softmax(const std::vector<double>& z) {
+        std::vector<double> probs(z.size());
         double zmax = z[0];
         for (double v : z) if (v > zmax) zmax = v;
 
-        // 2) exponentiate (z - zmax) and accumulate
         double sum = 0.0;
-        for (std::size_t k = 0; k < z.size(); ++k) {
-            out[k] = std::exp(z[k] - zmax);
-            sum   += out[k];
+        int K = z.size();
+        for (int c = 0; c < K; ++c) {
+            probs[c] = std::exp(z[c] - zmax);
+            sum += probs[c];
         }
-
-        // 3) normalise to a probability distribution
-        for (double& v : out) v /= sum;
-        return out;
+        for (double& v : probs) v /= sum;
+        return probs;
     }
 
-private:
-    // ----------------------------------------------------------------
-    //  Hyper-parameters and learned parameters
-    // ----------------------------------------------------------------
-    double learning_rate_;
-    int    n_iterations_;
-    double lambda_;
-    int    n_classes_;        // set during fit()
+    // Train w_bin and b_bin using gradient descent on binary cross entropy with L2 regularisation
+    void fit_binary(const std::vector<std::vector<double>>& X,
+                    const std::vector<double>& y) {
+        int n = X.size();
+        if (n == 0) return;
+        int k = X[0].size();
+        w_bin.assign(k, 0.0);
+        b_bin = 0.0;
 
-    // Binary path  (K = 2): one weight vector and scalar bias
-    std::vector<double> weights_binary_;   // shape [n_features]
-    double              bias_binary_;
+        for (int it = 0; it < epochs; ++it) {
+            std::vector<double> dL_dw(k, 0.0);
+            double dL_db = 0.0;
 
-    // Multi-class path  (K > 2): one weight vector and bias per class
-    std::vector<std::vector<double>> W_;   // shape [K][n_features]
-    std::vector<double>              b_;   // shape [K]
+            for (int i = 0; i < n; ++i) {
+                double z = b_bin;
+                for (int j = 0; j < k; ++j) {
+                    z += w_bin[j] * X[i][j];
+                }
+                double y_hat = sigmoid(z);
+                double error = y_hat - y[i];
 
-
-    // ================================================================
-    //  PERSON B -- BINARY LOGISTIC REGRESSION
-    //  Implement these two methods.
-    // ================================================================
-
-    /**
-     *  Train weights_binary_ and bias_binary_ using gradient descent on
-     *  the binary cross-entropy loss with L2 regularisation.
-     *
-     *  Gradient (per parameter):
-     *     dL/dw_j = (1/m) sum_i (y_hat_i - y_i) * x_ij  +  2*lambda*w_j
-     *     dL/db   = (1/m) sum_i (y_hat_i - y_i)
-     *
-     *  where y_hat_i = sigmoid(w . x_i + b).
-     */
-    void fit_binary_(const std::vector<std::vector<double>>& X,
-                     const std::vector<double>&              y)
-    {
-        
-        const std::size_t m = X.size();
-        const std::size_t n = X[0].size();
-        weights_binary_.assign(n, 0.0);
-        bias_binary_ = 0.0;
-
-        for (int it = 0; it < n_iterations_; ++it) {
-
-            std::vector<double> dw(n, 0.0);
-            double              db = 0.0;
-
-            for (std::size_t i = 0; i < m; ++i) {
-                // forward pass: linear combination + sigmoid
-                double z = bias_binary_;
-                for (std::size_t j = 0; j < n; ++j)
-                    z += weights_binary_[j] * X[i][j];
-                const double y_hat = sigmoid(z);
-
-                // accumulate gradient contributions
-                const double err = y_hat - y[i];
-                for (std::size_t j = 0; j < n; ++j)
-                    dw[j] += err * X[i][j];
-                db += err;
+                for (int j = 0; j < k; ++j) {
+                    dL_dw[j] += error * X[i][j];
+                }
+                dL_db += error;
             }
 
-            // gradient step with L2 regularisation on weights only
-            const double scale = 1.0 / static_cast<double>(m);
-            for (std::size_t j = 0; j < n; ++j) {
-                const double grad = scale * dw[j] + 2.0 * lambda_ * weights_binary_[j];
-                weights_binary_[j] -= learning_rate_ * grad;
+            // L2 regularisation applies to weights only, not the bias
+            for (int j = 0; j < k; ++j) {
+                double grad = (1.0 / n) * dL_dw[j] + 2.0 * lambda * w_bin[j];
+                w_bin[j] -= learning_rate * grad;
             }
-            bias_binary_ -= learning_rate_ * scale * db;
+            b_bin -= learning_rate * (1.0 / n) * dL_db;
         }
-
-        (void)X; (void)y;
     }
 
-    /**
-     *  For each row of X, compute sigmoid(w . x + b) and threshold at 0.5.
-     */
-    std::vector<int>
-    predict_binary_(const std::vector<std::vector<double>>& X) const
-    {
-        std::vector<int> out(X.size(), 0);
-        for (std::size_t i = 0; i < X.size(); ++i) {
-            double z = bias_binary_;
-            for (std::size_t j = 0; j < weights_binary_.size(); ++j)
-                z += weights_binary_[j] * X[i][j];
-            out[i] = (sigmoid(z) >= 0.5) ? 1 : 0;
+    // Predict 0 or 1 for each sample by thresholding sigmoid output at 0.5
+    std::vector<int> predict_binary(const std::vector<std::vector<double>>& X) const {
+        int n = X.size();
+        int k = w_bin.size();
+        std::vector<int> predictions(n);
+
+        for (int i = 0; i < n; ++i) {
+            double z = b_bin;
+            for (int j = 0; j < k; ++j) {
+                z += w_bin[j] * X[i][j];
+            }
+            predictions[i] = (sigmoid(z) >= 0.5) ? 1 : 0;
         }
-        return out;
+        return predictions;
     }
 
+    // Train W and B using softmax gradient descent with L2 regularisation
+    void fit_multiclass(const std::vector<std::vector<double>>& X,
+                        const std::vector<double>& y) {
+        int n = X.size();
+        if (n == 0) return;
+        int k = X[0].size();
+        int K = n_classes;
 
-    // ================================================================
-    //  PERSON C -- MULTI-CLASS LOGISTIC REGRESSION (SOFTMAX)
-    //  Implement these two methods.
-    // ================================================================
+        W.assign(K, std::vector<double>(k, 0.0));
+        B.assign(K, 0.0);
 
-    /**
-     *  Train W_ and b_ using gradient descent on categorical cross-entropy
-     *  with L2 regularisation.
-     *
-     *  Forward pass per sample i:
-     *     z_ik   = W_k . x_i + b_k        for k = 0..K-1
-     *     p_ik   = softmax(z_i)_k          (output of softmax over z_i)
-     *
-     *  Build one-hot labels: y_ik = 1 if y_i == k else 0.
-     *
-     *  Gradient:
-     *     dL/dW_kj = (1/m) sum_i (p_ik - y_ik) * x_ij  +  2*lambda*W_kj
-     *     dL/db_k  = (1/m) sum_i (p_ik - y_ik)
-     */
-    void fit_multiclass_(const std::vector<std::vector<double>>& X,
-                         const std::vector<double>&              y)
-    {
-        // ------------------------------------------------------------
-        //  TODO  (Person C) -- implement softmax gradient descent.
-        // ------------------------------------------------------------
-        //  Suggested skeleton:
-        //
-        //  const std::size_t m = X.size();
-        //  const std::size_t n = X[0].size();
-        //  const int         K = n_classes_;
-        //
-        //  // Initialise weight matrix and bias vector to zeros
-        //  W_.assign(K, std::vector<double>(n, 0.0));
-        //  b_.assign(K, 0.0);
-        //
-        //  for (int it = 0; it < n_iterations_; ++it) {
-        //
-        //      // Accumulators for the gradients
-        //      std::vector<std::vector<double>> dW(K, std::vector<double>(n, 0.0));
-        //      std::vector<double>              db(K, 0.0);
-        //
-        //      for (std::size_t i = 0; i < m; ++i) {
-        //
-        //          // 1) forward pass: raw scores z = W x + b
-        //          std::vector<double> z(K, 0.0);
-        //          for (int k = 0; k < K; ++k) {
-        //              double s = b_[k];
-        //              for (std::size_t j = 0; j < n; ++j)
-        //                  s += W_[k][j] * X[i][j];
-        //              z[k] = s;
-        //          }
-        //
-        //          // 2) softmax
-        //          const std::vector<double> probs = softmax(z);
-        //
-        //          // 3) error vector: probs - one_hot(y_i)
-        //          const int label = static_cast<int>(y[i]);
-        //          for (int k = 0; k < K; ++k) {
-        //              const double err = probs[k] - ((k == label) ? 1.0 : 0.0);
-        //              for (std::size_t j = 0; j < n; ++j)
-        //                  dW[k][j] += err * X[i][j];
-        //              db[k] += err;
-        //          }
-        //      }
-        //
-        //      // 4) gradient update with L2 regularisation
-        //      const double scale = 1.0 / static_cast<double>(m);
-        //      for (int k = 0; k < K; ++k) {
-        //          for (std::size_t j = 0; j < n; ++j) {
-        //              const double grad = scale * dW[k][j] + 2.0 * lambda_ * W_[k][j];
-        //              W_[k][j] -= learning_rate_ * grad;
-        //          }
-        //          b_[k] -= learning_rate_ * scale * db[k];
-        //      }
-        //  }
+        for (int it = 0; it < epochs; ++it) {
+            std::vector<std::vector<double>> dL_dW(K, std::vector<double>(k, 0.0));
+            std::vector<double> dL_dB(K, 0.0);
 
-        (void)X; (void)y;
+            for (int i = 0; i < n; ++i) {
+                // Compute the raw score for each class
+                std::vector<double> z(K, 0.0);
+                for (int c = 0; c < K; ++c) {
+                    double s = B[c];
+                    for (int j = 0; j < k; ++j) {
+                        s += W[c][j] * X[i][j];
+                    }
+                    z[c] = s;
+                }
+
+                // Convert scores into probabilities via softmax
+                std::vector<double> probs = softmax(z);
+
+                // Error per class is predicted probability minus the one-hot target
+                int label = static_cast<int>(y[i]);
+                for (int c = 0; c < K; ++c) {
+                    double error = probs[c] - ((c == label) ? 1.0 : 0.0);
+                    for (int j = 0; j < k; ++j) {
+                        dL_dW[c][j] += error * X[i][j];
+                    }
+                    dL_dB[c] += error;
+                }
+            }
+
+            // L2 regularisation applies to weights only, not the biases
+            for (int c = 0; c < K; ++c) {
+                for (int j = 0; j < k; ++j) {
+                    double grad = (1.0 / n) * dL_dW[c][j] + 2.0 * lambda * W[c][j];
+                    W[c][j] -= learning_rate * grad;
+                }
+                B[c] -= learning_rate * (1.0 / n) * dL_dB[c];
+            }
+        }
     }
 
-    /**
-     *  For each row of X, compute softmax(W x + b) and return argmax_k.
-     */
-    std::vector<int>
-    predict_multiclass_(const std::vector<std::vector<double>>& X) const
-    {
-        // ------------------------------------------------------------
-        //  TODO  (Person C) -- argmax over softmax probabilities.
-        // ------------------------------------------------------------
-        //
-        //  std::vector<int> out(X.size(), 0);
-        //  for (std::size_t i = 0; i < X.size(); ++i) {
-        //      std::vector<double> z(n_classes_, 0.0);
-        //      for (int k = 0; k < n_classes_; ++k) {
-        //          double s = b_[k];
-        //          for (std::size_t j = 0; j < W_[k].size(); ++j)
-        //              s += W_[k][j] * X[i][j];
-        //          z[k] = s;
-        //      }
-        //      const std::vector<double> probs = softmax(z);
-        //      out[i] = static_cast<int>(
-        //          std::distance(probs.begin(), std::max_element(probs.begin(), probs.end())));
-        //  }
-        //  return out;
+    // For each sample compute softmax probabilities and return the class with the highest one
+    std::vector<int> predict_multiclass(const std::vector<std::vector<double>>& X) const {
+        int n = X.size();
+        int k = W[0].size();
+        int K = n_classes;
+        std::vector<int> predictions(n);
 
-        return std::vector<int>(X.size(), 0); // placeholder
+        for (int i = 0; i < n; ++i) {
+            std::vector<double> z(K, 0.0);
+            for (int c = 0; c < K; ++c) {
+                double s = B[c];
+                for (int j = 0; j < k; ++j) {
+                    s += W[c][j] * X[i][j];
+                }
+                z[c] = s;
+            }
+            std::vector<double> probs = softmax(z);
+
+            // Find the class with the highest probability
+            int best = 0;
+            for (int c = 1; c < K; ++c) {
+                if (probs[c] > probs[best]) best = c;
+            }
+            predictions[i] = best;
+        }
+        return predictions;
     }
 };
 
