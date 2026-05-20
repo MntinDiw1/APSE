@@ -43,10 +43,10 @@ public:
                                             int    n_iterations  = 1000,
                                             double lambda        = 0.01)
                 : learning_rate_(learning_rate),
-                    n_iterations_(n_iterations),
-                    lambda_(lambda),
-                    n_classes_(0),
-                    bias_binary_(0.0) {}
+                  n_iterations_(n_iterations),
+                  lambda_(lambda),
+                  n_classes_(0),
+                  bias_binary_(0.0) {}
 
     // ----------------------------------------------------------------
     //  Public API -- shared dispatch.  Don't modify these unless you
@@ -214,8 +214,7 @@ private:
     /**
      *  For each row of X, compute sigmoid(w . x + b) and threshold at 0.5.
      */
-    std::vector<int>
-    predict_binary_(const std::vector<std::vector<double>>& X) const
+    std::vector<int> predict_binary_(const std::vector<std::vector<double>>& X) const
     {
         std::vector<int> out(X.size(), 0);
         for (std::size_t i = 0; i < X.size(); ++i) {
@@ -228,111 +227,99 @@ private:
     }
 
 
-    // ================================================================
-    //  PERSON C -- MULTI-CLASS LOGISTIC REGRESSION (SOFTMAX)
-    //  Implement these two methods.
-    // ================================================================
-
     /**
-     *  Train W_ and b_ using gradient descent on categorical cross-entropy
-     *  with L2 regularisation.
-     *
-     *  Forward pass per sample i:
-     *     z_ik   = W_k . x_i + b_k        for k = 0..K-1
-     *     p_ik   = softmax(z_i)_k          (output of softmax over z_i)
-     *
-     *  Build one-hot labels: y_ik = 1 if y_i == k else 0.
-     *
-     *  Gradient:
-     *     dL/dW_kj = (1/m) sum_i (p_ik - y_ik) * x_ij  +  2*lambda*W_kj
-     *     dL/db_k  = (1/m) sum_i (p_ik - y_ik)
+     * Train W_ and b_ using gradient descent on categorical cross-entropy
+     * with L2 regularisation.
      */
     void fit_multiclass_(const std::vector<std::vector<double>>& X,
                          const std::vector<double>&              y)
     {
-        // ------------------------------------------------------------
-        //  TODO  (Person C) -- implement softmax gradient descent.
-        // ------------------------------------------------------------
-        //  Suggested skeleton:
-        //
-        //  const std::size_t m = X.size();
-        //  const std::size_t n = X[0].size();
-        //  const int         K = n_classes_;
-        //
-        //  // Initialise weight matrix and bias vector to zeros
-        //  W_.assign(K, std::vector<double>(n, 0.0));
-        //  b_.assign(K, 0.0);
-        //
-        //  for (int it = 0; it < n_iterations_; ++it) {
-        //
-        //      // Accumulators for the gradients
-        //      std::vector<std::vector<double>> dW(K, std::vector<double>(n, 0.0));
-        //      std::vector<double>              db(K, 0.0);
-        //
-        //      for (std::size_t i = 0; i < m; ++i) {
-        //
-        //          // 1) forward pass: raw scores z = W x + b
-        //          std::vector<double> z(K, 0.0);
-        //          for (int k = 0; k < K; ++k) {
-        //              double s = b_[k];
-        //              for (std::size_t j = 0; j < n; ++j)
-        //                  s += W_[k][j] * X[i][j];
-        //              z[k] = s;
-        //          }
-        //
-        //          // 2) softmax
-        //          const std::vector<double> probs = softmax(z);
-        //
-        //          // 3) error vector: probs - one_hot(y_i)
-        //          const int label = static_cast<int>(y[i]);
-        //          for (int k = 0; k < K; ++k) {
-        //              const double err = probs[k] - ((k == label) ? 1.0 : 0.0);
-        //              for (std::size_t j = 0; j < n; ++j)
-        //                  dW[k][j] += err * X[i][j];
-        //              db[k] += err;
-        //          }
-        //      }
-        //
-        //      // 4) gradient update with L2 regularisation
-        //      const double scale = 1.0 / static_cast<double>(m);
-        //      for (int k = 0; k < K; ++k) {
-        //          for (std::size_t j = 0; j < n; ++j) {
-        //              const double grad = scale * dW[k][j] + 2.0 * lambda_ * W_[k][j];
-        //              W_[k][j] -= learning_rate_ * grad;
-        //          }
-        //          b_[k] -= learning_rate_ * scale * db[k];
-        //      }
-        //  }
+        const std::size_t m = X.size();
+        const std::size_t n = X[0].size();
+        const int         K = n_classes_;
 
-        (void)X; (void)y;
+        // Initialise weight matrix and bias vector to zeros
+        W_.assign(K, std::vector<double>(n, 0.0));
+        b_.assign(K, 0.0);
+
+        for (int it = 0; it < n_iterations_; ++it) {
+
+            // Accumulators for the gradients
+            std::vector<std::vector<double>> dW(K, std::vector<double>(n, 0.0));
+            std::vector<double>              db(K, 0.0);
+
+            for (std::size_t i = 0; i < m; ++i) {
+
+                // 1) forward pass: raw scores z_k = W_k . x_i + b_k
+                std::vector<double> z(K, 0.0);
+                for (int k = 0; k < K; ++k) {
+                    double s = b_[k];
+                    for (std::size_t j = 0; j < n; ++j) {
+                        s += W_[k][j] * X[i][j];
+                    }
+                    z[k] = s;
+                }
+
+                // 2) squash raw scores into a probability distribution
+                const std::vector<double> probs = softmax(z);
+
+                // 3) compute errors and accumulate gradients
+                // Performance tip applied: cast label once per sample, not per class
+                const int label = static_cast<int>(y[i]); 
+                
+                for (int k = 0; k < K; ++k) {
+                    // on-the-fly one-hot encoding comparison
+                    const double err = probs[k] - ((k == label) ? 1.0 : 0.0);
+                    
+                    for (std::size_t j = 0; j < n; ++j) {
+                        dW[k][j] += err * X[i][j];
+                    }
+                    db[k] += err;
+                }
+            }
+
+            // 4) gradient update step with L2 regularisation
+            const double scale = 1.0 / static_cast<double>(m);
+            for (int k = 0; k < K; ++k) {
+                for (std::size_t j = 0; j < n; ++j) {
+                    const double grad = scale * dW[k][j] + 2.0 * lambda_ * W_[k][j];
+                    W_[k][j] -= learning_rate_ * grad;
+                }
+                b_[k] -= learning_rate_ * scale * db[k];
+            }
+        }
     }
 
     /**
-     *  For each row of X, compute softmax(W x + b) and return argmax_k.
+     * For each row of X, compute softmax(W x + b) and return argmax_k.
      */
     std::vector<int>
     predict_multiclass_(const std::vector<std::vector<double>>& X) const
     {
-        // ------------------------------------------------------------
-        //  TODO  (Person C) -- argmax over softmax probabilities.
-        // ------------------------------------------------------------
-        //
-        //  std::vector<int> out(X.size(), 0);
-        //  for (std::size_t i = 0; i < X.size(); ++i) {
-        //      std::vector<double> z(n_classes_, 0.0);
-        //      for (int k = 0; k < n_classes_; ++k) {
-        //          double s = b_[k];
-        //          for (std::size_t j = 0; j < W_[k].size(); ++j)
-        //              s += W_[k][j] * X[i][j];
-        //          z[k] = s;
-        //      }
-        //      const std::vector<double> probs = softmax(z);
-        //      out[i] = static_cast<int>(
-        //          std::distance(probs.begin(), std::max_element(probs.begin(), probs.end())));
-        //  }
-        //  return out;
-
-        return std::vector<int>(X.size(), 0); // placeholder
+        std::vector<int> out(X.size(), 0);
+        
+        for (std::size_t i = 0; i < X.size(); ++i) {
+            std::vector<double> z(n_classes_, 0.0);
+            
+            // 1) Compute raw scores for all K classes
+            for (int k = 0; k < n_classes_; ++k) {
+                double s = b_[k];
+                for (std::size_t j = 0; j < W_[k].size(); ++j) {
+                    s += W_[k][j] * X[i][j];
+                }
+                z[k] = s;
+            }
+            
+            // 2) Get probabilities using the helper
+            const std::vector<double> probs = softmax(z);
+            
+            // 3) Find the index of the highest probability (argmax)
+            out[i] = static_cast<int>(
+                std::distance(probs.begin(), std::max_element(probs.begin(), probs.end()))
+            );
+        }
+        
+        return out;
     }
 };
 
