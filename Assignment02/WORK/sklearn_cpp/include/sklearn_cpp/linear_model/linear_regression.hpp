@@ -9,9 +9,14 @@ namespace linear_model {
 
 // Class to perform linear regression using gradient descent
 class LinearRegression {
+private:
+    double learning_rate;
+    int epochs;
+    std::vector<double> w;
+    double b;
 public:
-    // Construct with chosen learning rate and number of epochs
-    explicit LinearRegression(double learning_rate = 1e-7, int epochs = 10000)
+    // Construct with chosen learning rate and number of interations
+    LinearRegression(double learning_rate = 1e-7, int epochs = 10000)
         : learning_rate(learning_rate), epochs(epochs), b(0.0) {}
 
     // Train the model on feature matrix X and label vector y using gradient descent
@@ -73,11 +78,6 @@ public:
     const std::vector<double>& weights() const { return w; }
     double bias() const { return b; }
 
-private:
-    double learning_rate;
-    int epochs;
-    std::vector<double> w;
-    double b;
 };
 
 } // namespace linear_model
