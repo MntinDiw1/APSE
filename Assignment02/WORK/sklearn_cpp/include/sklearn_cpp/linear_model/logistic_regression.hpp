@@ -31,7 +31,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "metrics.hpp"
+#include "sklearn_cpp/utils/metrics.hpp"
 
 namespace sklearn_cpp {
 namespace linear_model {
