@@ -31,43 +31,35 @@
 #include <stdexcept>
 #include <vector>
 
-#include "sklearn_cpp/utils/metrics.hpp"
+#include "metrics.hpp"
 
 namespace sklearn_cpp {
 namespace linear_model {
 
 class LogisticRegression {
 public:
-    /**
-     * @param learning_rate  gradient descent step size
-     * @param n_iterations   number of gradient descent passes
-     * @param lambda         L2 regularisation strength (0 = none)
-     */
-    explicit LogisticRegression(double learning_rate = 0.1,
-                                int    n_iterations  = 1000,
-                                double lambda        = 0.01)
-        : learning_rate_(learning_rate),
-          n_iterations_(n_iterations),
-          lambda_(lambda),
-          n_classes_(0),
-          bias_binary_(0.0) {}
+        // Construct a new LogisticRegression object
+        LogisticRegression(double learning_rate = 0.1,
+                                            int    n_iterations  = 1000,
+                                            double lambda        = 0.01)
+                : learning_rate_(learning_rate),
+                    n_iterations_(n_iterations),
+                    lambda_(lambda),
+                    n_classes_(0),
+                    bias_binary_(0.0) {}
 
     // ----------------------------------------------------------------
     //  Public API -- shared dispatch.  Don't modify these unless you
     //  also update both private implementations.
     // ----------------------------------------------------------------
 
-    /**
-     * Train the model.  Detects K from y and dispatches.
-     *
-     * @param X  shape [n_samples][n_features]
-     * @param y  shape [n_samples], labels in {0, 1, ..., K-1}
-     */
+    
+        // * Train the model.  Detects K from y and dispatches.
     void fit(const std::vector<std::vector<double>>& X,
              const std::vector<double>&              y)
     {
         // Count distinct integer labels in y
-        std::set<int> unique;
+        std::set<int> unique;   
         for (double v : y) unique.insert(static_cast<int>(v));
         n_classes_ = static_cast<int>(unique.size());
 
@@ -182,43 +174,39 @@ private:
     void fit_binary_(const std::vector<std::vector<double>>& X,
                      const std::vector<double>&              y)
     {
-        // ------------------------------------------------------------
-        //  TODO  (Person B) -- implement binary gradient descent.
-        // ------------------------------------------------------------
-        //  Suggested skeleton:
-        //
-        //  const std::size_t m = X.size();
-        //  const std::size_t n = X[0].size();
-        //  weights_binary_.assign(n, 0.0);
-        //  bias_binary_ = 0.0;
-        //
-        //  for (int it = 0; it < n_iterations_; ++it) {
-        //
-        //      std::vector<double> dw(n, 0.0);
-        //      double              db = 0.0;
-        //
-        //      for (std::size_t i = 0; i < m; ++i) {
-        //          // forward pass: linear combination + sigmoid
-        //          double z = bias_binary_;
-        //          for (std::size_t j = 0; j < n; ++j)
-        //              z += weights_binary_[j] * X[i][j];
-        //          const double y_hat = sigmoid(z);
-        //
-        //          // accumulate gradient contributions
-        //          const double err = y_hat - y[i];
-        //          for (std::size_t j = 0; j < n; ++j)
-        //              dw[j] += err * X[i][j];
-        //          db += err;
-        //      }
-        //
-        //      // gradient step with L2 regularisation on weights only
-        //      const double scale = 1.0 / static_cast<double>(m);
-        //      for (std::size_t j = 0; j < n; ++j) {
-        //          const double grad = scale * dw[j] + 2.0 * lambda_ * weights_binary_[j];
-        //          weights_binary_[j] -= learning_rate_ * grad;
-        //      }
-        //      bias_binary_ -= learning_rate_ * scale * db;
-        //  }
+        
+        const std::size_t m = X.size();
+        const std::size_t n = X[0].size();
+        weights_binary_.assign(n, 0.0);
+        bias_binary_ = 0.0;
+
+        for (int it = 0; it < n_iterations_; ++it) {
+
+            std::vector<double> dw(n, 0.0);
+            double              db = 0.0;
+
+            for (std::size_t i = 0; i < m; ++i) {
+                // forward pass: linear combination + sigmoid
+                double z = bias_binary_;
+                for (std::size_t j = 0; j < n; ++j)
+                    z += weights_binary_[j] * X[i][j];
+                const double y_hat = sigmoid(z);
+
+                // accumulate gradient contributions
+                const double err = y_hat - y[i];
+                for (std::size_t j = 0; j < n; ++j)
+                    dw[j] += err * X[i][j];
+                db += err;
+            }
+
+            // gradient step with L2 regularisation on weights only
+            const double scale = 1.0 / static_cast<double>(m);
+            for (std::size_t j = 0; j < n; ++j) {
+                const double grad = scale * dw[j] + 2.0 * lambda_ * weights_binary_[j];
+                weights_binary_[j] -= learning_rate_ * grad;
+            }
+            bias_binary_ -= learning_rate_ * scale * db;
+        }
 
         (void)X; (void)y;
     }
@@ -229,20 +217,14 @@ private:
     std::vector<int>
     predict_binary_(const std::vector<std::vector<double>>& X) const
     {
-        // ------------------------------------------------------------
-        //  TODO  (Person B) -- threshold the sigmoid output.
-        // ------------------------------------------------------------
-        //
-        //  std::vector<int> out(X.size(), 0);
-        //  for (std::size_t i = 0; i < X.size(); ++i) {
-        //      double z = bias_binary_;
-        //      for (std::size_t j = 0; j < weights_binary_.size(); ++j)
-        //          z += weights_binary_[j] * X[i][j];
-        //      out[i] = (sigmoid(z) >= 0.5) ? 1 : 0;
-        //  }
-        //  return out;
-
-        return std::vector<int>(X.size(), 0); // placeholder
+        std::vector<int> out(X.size(), 0);
+        for (std::size_t i = 0; i < X.size(); ++i) {
+            double z = bias_binary_;
+            for (std::size_t j = 0; j < weights_binary_.size(); ++j)
+                z += weights_binary_[j] * X[i][j];
+            out[i] = (sigmoid(z) >= 0.5) ? 1 : 0;
+        }
+        return out;
     }
 
 
