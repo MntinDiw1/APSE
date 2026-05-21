@@ -9,7 +9,7 @@
 namespace sklearn_cpp {
 namespace utils {
 
-// CSV loader used by all three main programs
+// CSV loader used by all three main programs, developed with the help from Claude
 // Convention: every column except the last is a feature, the last column is the label
 class CSVReader {
 public:
