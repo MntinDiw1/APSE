@@ -87,5 +87,16 @@ int main() {
         "ECG Anomaly Detection - Confusion Matrix",
         "./plots/ecg_confusion_matrix.png");  // CHANGE THIS TO YOUR DESIRED PATH
 
+    // Plot the decision boundary for a 2D cross-section
+    sklearn_cpp::utils::Visualizer::plot_decision_boundary_2d(
+        x_test, y_test,
+        [&model](const auto& grid_X) { return model.predict(grid_X); },
+        "ECG Decision Boundary (Feature 0 vs 1)",
+        200, 
+        "./plots/ecg_decision_boundary.png",    // CHANGE THIS TO YOUR DESIRED PATH
+        0, // X-Axis Feature Index
+        1  // Y-Axis Feature Index
+        );
+
     return 0;
 }

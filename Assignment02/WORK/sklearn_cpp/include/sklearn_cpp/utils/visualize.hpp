@@ -9,10 +9,10 @@
  * for numerical safety and performance.
  *
  * Dependencies:
- *   Python 3 with matplotlib must be installed.
- *   Compile with: g++ ... $(python3-config --cflags --ldflags) -lmatplotlib_cpp
+ * Python 3 with matplotlib must be installed.
+ * Compile with: g++ ... $(python3-config --cflags --ldflags) -lmatplotlib_cpp
  * 
- * Gen AI utilized for debugging and some specific implementation details, but the overall structure and logic were designed by the author.
+ *  Gen AI utilized for debugging and some specific implementation details, but the overall structure and logic were designed by the author.
  */
 
 #define WITHOUT_NUMPY
@@ -41,9 +41,7 @@ using LabelVector = std::vector<int>;
 namespace detail {
     namespace plt = matplotlibcpp;
 
-    /**
-     * @brief Saves the figure if a path is provided, then displays it.
-     */
+    // Saves the figure if a path is provided, then displays it.
     inline void save_and_show(const std::string& save_path) {
         if (!save_path.empty()) {
             plt::save(save_path);
@@ -163,35 +161,55 @@ public:
     }
 
     // ==================================================================
-    //  LOGISTIC REGRESSION PLOTS
+    //  CLASSIFICATION / REGRESSION DECISION PLOTS
     // ==================================================================
 
     // Evaluates a classifier over a 2D mesh grid and plots the decision regions.
-    // Did not implement this in the example, but it's a common and useful visualization for 2D datasets
-    // I develouped this thinking binary meant 2D.
+    // Generalized to support N-Dimensional features (by holding non-plotted features at their mean)
+    // and an expanded palette to handle multiclass classification natively.
+    // THIS FUNCTION IS ALMOST 
+    template <typename Predictor>
     static void plot_decision_boundary_2d( 
             const Matrix& X,
             const Vector& y_true,
-            const std::function<LabelVector(const Matrix&)>& predictor,
+            Predictor predictor,
             const std::string& title = "Decision Boundary",
             int resolution = 200,
-            const std::string& save_path = "")
+            const std::string& save_path = "",
+            int feature_x = 0,
+            int feature_y = 1)
     {
-        if (X.empty() || X.front().size() != 2) {
-            throw std::invalid_argument("plot_decision_boundary_2d: X must be exactly 2-Dimensional.");
+        if (X.empty() || X.front().size() < 2) {
+            throw std::invalid_argument("plot_decision_boundary_2d: X must have at least 2 features.");
         }
 
         const std::size_t n = X.size();
+        const std::size_t d = X.front().size();
+
+        if (feature_x >= static_cast<int>(d) || feature_y >= static_cast<int>(d) || feature_x == feature_y) {
+            throw std::invalid_argument("plot_decision_boundary_2d: Invalid feature indices.");
+        }
+
+        // --- Compute means for non-plotted features to fix higher dimensions ---
+        Vector means(d, 0.0);
+        for (std::size_t i = 0; i < n; ++i) {
+            for (std::size_t j = 0; j < d; ++j) {
+                means[j] += X[i][j];
+            }
+        }
+        for (std::size_t j = 0; j < d; ++j) {
+            means[j] /= static_cast<double>(n);
+        }
 
         // --- Compute axis bounds with a 10% protective margin ---
-        double x0_min = X[0][0], x0_max = X[0][0];
-        double x1_min = X[0][1], x1_max = X[0][1];
+        double x0_min = X[0][feature_x], x0_max = X[0][feature_x];
+        double x1_min = X[0][feature_y], x1_max = X[0][feature_y];
         
         for (std::size_t i = 1; i < n; ++i) {
-            x0_min = std::min(x0_min, X[i][0]);
-            x0_max = std::max(x0_max, X[i][0]);
-            x1_min = std::min(x1_min, X[i][1]);
-            x1_max = std::max(x1_max, X[i][1]);
+            x0_min = std::min(x0_min, X[i][feature_x]);
+            x0_max = std::max(x0_max, X[i][feature_x]);
+            x1_min = std::min(x1_min, X[i][feature_y]);
+            x1_max = std::max(x1_max, X[i][feature_y]);
         }
         
         const double margin_0 = 0.1 * (x0_max - x0_min + 1e-9);
@@ -208,12 +226,21 @@ public:
 
         for (int r = 0; r < resolution; ++r) {
             for (int c = 0; c < resolution; ++c) {
-                grid.push_back({x0_min + c * step0, x1_min + r * step1});
+                // Initialize point with means, then override the two axes being plotted
+                Vector pt = means;
+                pt[feature_x] = x0_min + c * step0;
+                pt[feature_y] = x1_min + r * step1;
+                grid.push_back(pt);
             }
         }
 
         // Evaluate model over the entire grid
-        const LabelVector grid_labels = predictor(grid);
+        // The predictor template allows returning LabelVector or Vector (which we cast to int safely)
+        const auto grid_preds = predictor(grid);
+        std::vector<int> grid_labels(grid_preds.size());
+        for (std::size_t i = 0; i < grid_preds.size(); ++i) {
+            grid_labels[i] = static_cast<int>(grid_preds[i]);
+        }
 
         // Map distinct classes discovered in targets or predictions
         std::set<int> class_set;
@@ -223,11 +250,23 @@ public:
         const std::vector<int> classes(class_set.begin(), class_set.end());
         const std::size_t K = classes.size();
 
-        // High-contrast qualitative color palettes
-        constexpr const char* bg_colors[]  = {"#aec6e8", "#ffb347", "#90ee90", "#dda0dd", "#f08080", "#87ceeb"};
-        constexpr const char* dot_colors[] = {"#1f77b4", "#ff7f0e", "#2ca02c", "#9467bd", "#d62728", "#17becf"};
-        constexpr const char* markers[]    = {"o", "s", "^", "D", "v", "P"};
-        constexpr std::size_t palette_size = 6;
+        // Extended palettes for Multiclass (20 distinct colors mapped to Tab20)
+        constexpr const char* bg_colors[]  = {
+            "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", 
+            "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5",
+            "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+            "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+        };
+        constexpr const char* dot_colors[] = {
+            "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+            "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+            "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", 
+            "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"
+        };
+        constexpr const char* markers[] = {"o", "s", "^", "D", "v", "P", "*", "X", "<", ">", "h", "H", "d", "p", "8"};
+        
+        constexpr std::size_t num_colors = sizeof(bg_colors) / sizeof(bg_colors[0]);
+        constexpr std::size_t num_markers = sizeof(markers) / sizeof(markers[0]);
 
         detail::plt::figure_size(800, 700);
 
@@ -235,18 +274,19 @@ public:
         for (std::size_t ki = 0; ki < K; ++ki) {
             const int cls = classes[ki];
             Vector gx, gy;
-            gx.reserve(grid.size());
-            gy.reserve(grid.size());
+            gx.reserve(grid.size() / K + 1);
+            gy.reserve(grid.size() / K + 1);
 
             for (std::size_t gi = 0; gi < grid.size(); ++gi) {
                 if (grid_labels[gi] == cls) {
-                    gx.push_back(grid[gi][0]);
-                    gy.push_back(grid[gi][1]);
+                    gx.push_back(grid[gi][feature_x]);
+                    gy.push_back(grid[gi][feature_y]);
                 }
             }
             if (!gx.empty()) {
-                const std::string color = bg_colors[ki % palette_size];
-                detail::plt::scatter(gx, gy, 1.0, {{"color", color}, {"alpha", "0.4"}});
+                const std::string color = bg_colors[ki % num_colors];
+                // Removed {"alpha", "0.4"} because matplotlibcpp sends it as a string, which crashes Python
+                detail::plt::scatter(gx, gy, 1.0, {{"color", color}});
             }
         }
 
@@ -259,18 +299,18 @@ public:
 
             for (std::size_t i = 0; i < n; ++i) {
                 if (static_cast<int>(y_true[i]) == cls) {
-                    px.push_back(X[i][0]);
-                    py.push_back(X[i][1]);
+                    px.push_back(X[i][feature_x]);
+                    py.push_back(X[i][feature_y]);
                 }
             }
             if (!px.empty()) {
-                const std::string color  = dot_colors[ki % palette_size];
-                const std::string marker = markers[ki % palette_size];
+                const std::string color  = dot_colors[ki % num_colors];
+                const std::string marker = markers[ki % num_markers];
                 detail::plt::scatter(px, py, 30.0, {
                     {"color", color},
+                    {"marker", marker},
                     {"edgecolors", "black"},
-                    {"linewidths", "0.5"},
-                    {"zorder", "3"},
+                    // Removed string-based linewidths and zorder parameters to prevent Python TypeErrors
                     {"label", "Class " + std::to_string(cls)}
                 });
             }
@@ -278,8 +318,8 @@ public:
 
         detail::plt::legend();
         detail::plt::title(title);
-        detail::plt::xlabel("Feature 0");
-        detail::plt::ylabel("Feature 1");
+        detail::plt::xlabel("Feature " + std::to_string(feature_x));
+        detail::plt::ylabel("Feature " + std::to_string(feature_y));
         detail::plt::tight_layout();
         detail::save_and_show(save_path);
     }

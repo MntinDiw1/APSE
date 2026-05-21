@@ -42,5 +42,15 @@ int main() {
         "MNIST Digit Classification - Confusion Matrix",
         "./plots/mnist_confusion_matrix.png");  // CHANGE THIS TO YOUR DESIRED PATH
 
+    // Plot the decision boundary for a 2D cross-section (using central pixels)
+    sklearn_cpp::utils::Visualizer::plot_decision_boundary_2d(
+        x_test, y_test,
+        [&model](const auto& grid_X) { return model.predict(grid_X); },
+        "MNIST Decision Boundary (Pixels 350 vs 400)",
+        200, 
+        "./plots/mnist_decision_boundary.png",
+        350, // X-Axis Feature Index (a central pixel)
+        400  // Y-Axis Feature Index (another central pixel)
+    );
     return 0;
 }
