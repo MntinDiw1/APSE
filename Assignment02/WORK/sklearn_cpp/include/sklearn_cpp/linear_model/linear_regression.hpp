@@ -64,8 +64,7 @@ public:
                 dL_db += error;
             }
 
-            // Update each weight and the bias by stepping in the
-            // direction that reduces the loss most steeply.
+            // Update each weight and the bias by stepping in the direction that reduces the loss most steeply.
             // The factor 2/n comes from differentiating the MSE.
             for (int j = 0; j < k; ++j) {
                 w[j] -= (2.0 / n) * learning_rate * dL_dw[j];
@@ -91,7 +90,7 @@ public:
         return predictions;
     }
 
-    // Return the R squared score on the given data (1.0 is a perfect fit)
+    // Return the R squared score on the given data
     double score(const std::vector<std::vector<double>>& X,
                  const std::vector<double>& y_true) const {
         return utils::r2_score(y_true, predict(X));
