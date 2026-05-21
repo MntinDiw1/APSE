@@ -10,6 +10,8 @@
  *     accuracy_score(y_true, y_pred)  classification accuracy
  *
  * Used by all three main programs (concrete, ecg, mnist).
+ * 
+ * Gen AI generated, but with some manual cleanup and testing.
  */
 
 #include <stdexcept>

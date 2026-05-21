@@ -11,6 +11,8 @@
  * Dependencies:
  *   Python 3 with matplotlib must be installed.
  *   Compile with: g++ ... $(python3-config --cflags --ldflags) -lmatplotlib_cpp
+ * 
+ * Gen AI utilized for debugging and some specific implementation details, but the overall structure and logic were designed by the author.
  */
 
 #define WITHOUT_NUMPY
