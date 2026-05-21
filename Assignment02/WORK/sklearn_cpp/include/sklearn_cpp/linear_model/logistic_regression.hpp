@@ -1,29 +1,5 @@
 #pragma once
 
-/*
- * logistic_regression.hpp
- * =======================
- * Mirrors sklearn.linear_model.LogisticRegression from Python.
- *
- * Detects K (number of classes) from the unique values in y and
- * dispatches to either the binary or the multi-class implementation.
- *
- *     Binary case (K = 2):
- *         model:    y_hat = sigmoid(w . x + b)
- *         loss:     BCE  + L2 regularisation
- *
- *     Multi-class case (K > 2):
- *         model:    y_hat_k = softmax_k(W_k . x + b_k)   for k = 0..K-1
- *         loss:     categorical cross-entropy + L2 regularisation
- *
- * Maintained by:
- *     Person B  -> the binary path  (fit_binary_, predict_binary_)
- *     Person C  -> the multi path   (fit_multiclass_, predict_multiclass_)
- *
- * The public interface (fit, predict, score) is shared and already wired up.
- * Both of you just implement the two private "*_impl" functions below.
- * ----------------------------------------------------------------------
- */
 
 #include <algorithm>
 #include <cmath>
@@ -32,10 +8,11 @@
 #include <vector>
 
 #include "sklearn_cpp/utils/metrics.hpp"
-#include "sklearn_cpp/utils/visualize.hpp"
 
 namespace sklearn_cpp {
 namespace linear_model {
+
+    
 
 class LogisticRegression {
 public:
@@ -48,14 +25,8 @@ public:
                   lambda_(lambda),
                   n_classes_(0),
                   bias_binary_(0.0) {}
-
-    // ----------------------------------------------------------------
-    //  Public API -- shared dispatch.  Don't modify these unless you
-    //  also update both private implementations.
-    // ----------------------------------------------------------------
-
     
-        // * Train the model.  Detects K from y and dispatches.
+        // Train the model.  Detects K from y and dispatches.
     void fit(const std::vector<std::vector<double>>& X,
              const std::vector<double>&              y)
     {
@@ -67,16 +38,15 @@ public:
         if (n_classes_ < 2)
             throw std::invalid_argument(
                 "LogisticRegression: need at least 2 classes in y");
-
+ 
         if (n_classes_ == 2)
             fit_binary_(X, y);
         else
             fit_multiclass_(X, y);
     }
 
-    /**
-     * Predict integer class labels for new samples.
-     */
+     // Predict integer class labels for new samples.
+
     std::vector<int> predict(const std::vector<std::vector<double>>& X) const
     {
         if (n_classes_ == 2)
@@ -84,26 +54,18 @@ public:
         return predict_multiclass_(X);
     }
 
-    /**
-     * Classification accuracy on (X, y_true).
-     */
+     // Classification accuracy on (X, y_true). 
     double score(const std::vector<std::vector<double>>& X,
                  const std::vector<double>&              y_true) const
     {
-        return utils::accuracy_score(y_true, predict(X));
+        return utils::accuracy_score(y_true, predict(X)); 
     }
 
-    int n_classes() const { return n_classes_; }
+    int n_classes() const { return n_classes_; } 
 
-    // ----------------------------------------------------------------
-    //  Math helpers -- inline static so they can be used by either
-    //  implementation freely.
-    // ----------------------------------------------------------------
 
-    /**
-     * Numerically stable sigmoid:   sigma(z) = 1 / (1 + exp(-z))
-     */
-    static double sigmoid(double z)
+    //Numerically stable sigmoid:   sigma(z) = 1 / (1 + exp(-z))
+    double sigmoid(double z) const
     {
         // Guard against overflow for very negative z
         if (z >= 0.0) {
@@ -115,11 +77,10 @@ public:
         }
     }
 
-    /**
-     * Numerically stable softmax over a single sample's K raw scores.
-     * Subtracts max(z) before exponentiation to avoid overflow.
-     */
-    static std::vector<double> softmax(const std::vector<double>& z)
+     //Numerically stable softmax over a single sample's K raw scores.
+     // Subtracts max(z) before exponentiation to avoid overflow.
+    
+    std::vector<double> softmax(const std::vector<double>& z) const
     {
         std::vector<double> out(z.size());
 
@@ -139,10 +100,9 @@ public:
         return out;
     }
 
+
 private:
-    // ----------------------------------------------------------------
     //  Hyper-parameters and learned parameters
-    // ----------------------------------------------------------------
     double learning_rate_;
     int    n_iterations_;
     double lambda_;
@@ -157,21 +117,6 @@ private:
     std::vector<double>              b_;   // shape [K]
 
 
-    // ================================================================
-    //  PERSON B -- BINARY LOGISTIC REGRESSION
-    //  Implement these two methods.
-    // ================================================================
-
-    /**
-     *  Train weights_binary_ and bias_binary_ using gradient descent on
-     *  the binary cross-entropy loss with L2 regularisation.
-     *
-     *  Gradient (per parameter):
-     *     dL/dw_j = (1/m) sum_i (y_hat_i - y_i) * x_ij  +  2*lambda*w_j
-     *     dL/db   = (1/m) sum_i (y_hat_i - y_i)
-     *
-     *  where y_hat_i = sigmoid(w . x_i + b).
-     */
     void fit_binary_(const std::vector<std::vector<double>>& X,
                      const std::vector<double>&              y)
     {
@@ -228,10 +173,9 @@ private:
     }
 
 
-    /**
-     * Train W_ and b_ using gradient descent on categorical cross-entropy
-     * with L2 regularisation.
-     */
+    
+     // Train W_ and b_ using gradient descent on categorical cross-entropy with L2 regularisation.
+
     void fit_multiclass_(const std::vector<std::vector<double>>& X,
                          const std::vector<double>&              y)
     {
