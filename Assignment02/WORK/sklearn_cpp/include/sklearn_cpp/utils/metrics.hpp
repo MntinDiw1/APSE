@@ -100,5 +100,5 @@ inline double accuracy_score(const std::vector<double>& y_true,
     return accuracy_score(y_int, y_pred);
 }
 
-} // namespace utils
-} // namespace sklearn_cpp
+}
+} 

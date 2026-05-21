@@ -5,6 +5,8 @@
 #include "sklearn_cpp/utils/metrics.hpp"
 #include "sklearn_cpp/utils/visualize.hpp"
 
+
+//namespacing to avoid potential conflicts with other files
 namespace sklearn_cpp {
 namespace linear_model {
 
@@ -81,5 +83,5 @@ public:
 
 };
 
-} // namespace linear_model
-} // namespace sklearn_cpp
+}
+} 
