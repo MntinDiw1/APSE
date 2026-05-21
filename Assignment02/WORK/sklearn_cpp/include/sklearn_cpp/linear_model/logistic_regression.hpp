@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "sklearn_cpp/utils/metrics.hpp"
+#include "sklearn_cpp/utils/visualize.hpp"
 
 namespace sklearn_cpp {
 namespace linear_model {
