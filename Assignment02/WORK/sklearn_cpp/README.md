@@ -1,18 +1,16 @@
 # ENG3091 APSE Assignment 2: sklearn implementation in C++
 
-A header-only C++ library that re-implements `LinearRegression` and `LogisticRegression` from Python's scikit-learn. The library is then applied to three datasets: predicting concrete strength, detecting ECG anomalies, and classifying handwritten digits.
+A header-only C++ library that implements `LinearRegression` and `LogisticRegression` from Python's scikit-learn. The library is then applied to three datasets: predicting concrete strength, detecting ECG anomalies, and classifying handwritten digits.
 
 ## Project structure
 
-```
-include/sklearn_cpp/
-    linear_model/      LinearRegression and LogisticRegression
-    utils/             CSV reader, scoring metrics, plotting helpers
-examples/              main programs - one per dataset
-data/                  CSV files (concrete.csv, ecg.csv, mnist_*.csv)
-plots/                 PNG outputs from the visualisation routines
-bin/                   compiled executables (created by build.sh)
-```
+    include/sklearn_cpp/
+        linear_model/      LinearRegression and LogisticRegression
+        utils/             CSV reader, scoring metrics, plotting helpers
+    examples/              main programs - one per dataset
+    data/                  CSV files (concrete.csv, ecg.csv, mnist_*.csv)
+    plots/                 PNG outputs from the visualisation routines
+    bin/                   compiled executables (created by build.sh)
 
 ## Implementation details
 
@@ -49,51 +47,35 @@ The `data/` folder needs to contain the following CSV files:
 These can be obtained two ways:
 
 **Option A — generate them locally** by running the included Python script:
-```
-python3 generate_mnist_csv.py
-```
+
+    python3 generate_mnist_csv.py
+
+Note: our dataset used for mnist is different to the defaults. Either use our python script to generate or change filepaths indecated in `main_mnist.cpp`
+
 This downloads the MNIST dataset and produces the required CSV files. The concrete and ECG datasets need to be supplied separately.
 
-**Option B — download from OneDrive** (recommended as a fallback if anything goes wrong with the script):
+**Option B — download from OneDrive** (a fallback if anything goes wrong with the script):
 https://gla-my.sharepoint.com/:f:/g/personal/2917444a_student_gla_ac_uk/IgDTXauKkff-SaWynTKQfJcyAQa1GDCtvRHjxaVGmFIFKeQ?e=hFRVvP
 
 Drop the downloaded files directly into the `./data/` folder.
 
-### MNIST dataset variants
-
-There are several MNIST files of different sizes. They all contain the same kind of data but differ in how many samples are included.
-
-`main_mnist.cpp` uses `mnist_train.csv` and `mnist_test.csv` by default.
-
 ### Step 2: Build the executables
 
-From the project root, make the build script executable (only needed once) and run it:
-```
-chmod +x build.sh
-./build.sh
-```
+From the project root, make the build script executable  and run it:
+
+    chmod +x build.sh
+    ./build.sh
 
 This compiles all three programs and puts them in the `./bin/` folder.
 
 ### Step 3: Run each program
 
-```
-./bin/concrete.out
-./bin/ecg.out
-./bin/mnist.out
-```
+    ./bin/concrete.out
+    ./bin/ecg.out
+    ./bin/mnist.out
 
 Each program loads a dataset, trains the model, prints the score, and saves plots to `./plots/`.
 
-## Dependencies
-
-The plotting code links against the Python interpreter (`matplotlibcpp` is a C++ wrapper around Python's matplotlib). In WSL these can be installed with:
-```
-sudo apt install python3-dev python3-matplotlib
-```
-
-If `python3-config` is not found when running `build.sh`, this is the package that needs installing.
-
 ## Use of generative AI
 
-Generative AI helped scaffold the project structure and assist with debugging. All uses of AI have been explicitly declared. 
+Generative AI helped scaffold the project structure and assist with debugging and general formatting. All uses of AI have been explicitly declared.
