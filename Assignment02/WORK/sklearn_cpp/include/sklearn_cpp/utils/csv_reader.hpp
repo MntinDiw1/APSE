@@ -9,7 +9,7 @@
 namespace sklearn_cpp {
 namespace utils {
 
-// CSV loader used by all three main programs, developed with guidance from Claude
+// CSV loader used by all three main programs (concrete, ecg, mnist).
 // Convention: every column except the last is a feature, the last column is the label
 class CSVReader {
 public:
@@ -32,7 +32,7 @@ public:
         
         // Read the file line by line
         while (std::getline(file, line)) {
-            // Skip the header row if requested
+            // Skip the header row if requested (used for concrete.csv)
             if (first_line && has_header) {
                 first_line = false;
                 continue;
