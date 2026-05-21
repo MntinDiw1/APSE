@@ -14,21 +14,23 @@ namespace utils {
 class CSVReader {
 public:
     // Load a CSV file into a feature matrix X and label vector y
-    // Set has_header to true if the first row contains column names
-    static void load(const std::string& filepath,
-                     bool has_header,
-                     std::vector<std::vector<double>>& X,
-                     std::vector<double>& y) {
+    static void load(const std::string& filepath,           // path to the CSV file
+                     bool has_header = false,               // Set has_header to true if the first row contains column names default to no header 
+                     std::vector<std::vector<double>>& X,   // output feature matrix
+                     std::vector<double>& y)                // output label vector
+        {
+        // Open file and check if it was successful
         std::ifstream file(filepath);
         if (!file.is_open())
             throw std::runtime_error("CSVReader::load -- cannot open file: " + filepath);
-
+        // Clear output containers
         X.clear();
         y.clear();
 
         std::string line;
         bool first_line = true;
-
+        
+        // Read the file line by line
         while (std::getline(file, line)) {
             // Skip the header row if requested
             if (first_line && has_header) {
