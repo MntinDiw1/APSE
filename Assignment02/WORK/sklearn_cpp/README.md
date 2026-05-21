@@ -1,4 +1,4 @@
-# ENG3091 APSE Assignment 2: sklearn implementation in C++
+# ENG3091 APSE Assignment 2
 
 A header-only C++ library that implements `LinearRegression` and `LogisticRegression` from Python's scikit-learn. The library is then applied to three datasets: predicting concrete strength, detecting ECG anomalies, and classifying handwritten digits.
 
@@ -50,7 +50,7 @@ These can be obtained two ways:
 
     python3 generate_mnist_csv.py
 
-Note: our dataset used for mnist is different to the defaults. Either use our python script to generate or change filepaths indecated in `main_mnist.cpp`
+Note: our dataset used for mnist is different to the defaults. Either use our python script to generate or change filepaths indicated in `main_mnist.cpp`
 
 This downloads the MNIST dataset and produces the required CSV files. The concrete and ECG datasets need to be supplied separately.
 

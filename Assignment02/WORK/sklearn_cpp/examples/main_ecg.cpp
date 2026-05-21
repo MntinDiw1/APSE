@@ -77,7 +77,7 @@ int main() {
     std::cout << "Testing..." << std::endl;
     std::vector<int> y_pred = model.predict(x_test);
 
-    // Report accuracy on the training set
+    // Report accuracy on the test set
     double accuracy = model.score(x_test, y_test);
     std::cout << "Accuracy: " << accuracy * 100 << "%" << std::endl;
 
