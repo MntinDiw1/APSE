@@ -4,6 +4,8 @@
 #   - data generation, 
 #   - CSV creation, and 
 #   - visualization.
+
+# A NEW PART THAT SPLITS THE DATA INTO TRAIN AND TEST SETS HAS BEEN ADDED AT THE END OF THE FILE.
 # %%
 import pandas as pd
 import numpy as np
@@ -103,3 +105,13 @@ else:
 
 # Shuffle, visualize, and save to PNG
 visualize_shuffled_png("./data/mnist_micro.csv", "./data/shuffled_digits.png")
+
+from sklearn.model_selection import train_test_split
+
+# Split the dataframe into 80% training and 20% testing
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['class'])
+
+# Save the distinct sets
+train_df.to_csv('./data/mnist_train.csv', index=False, header=False)
+test_df.to_csv('./data/mnist_test.csv', index=False, header=False)
+print("Saved distinct train and test datasets.")
