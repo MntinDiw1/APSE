@@ -58,6 +58,7 @@ public:
     // ==================================================================
 
     // Plots the raw 1-D feature data against the fitted regression line.
+    // This has not been used anywhere so far.
     static void plot_regression_fit(
             const Matrix& X,
             const Vector& y_true,
@@ -161,13 +162,14 @@ public:
     }
 
     // ==================================================================
-    //  CLASSIFICATION / REGRESSION DECISION PLOTS
+    //  REGRESSION DECISION PLOTS
     // ==================================================================
 
     // Evaluates a classifier over a 2D mesh grid and plots the decision regions.
     // Generalized to support N-Dimensional features (by holding non-plotted features at their mean)
     // and an expanded palette to handle multiclass classification natively.
-    // THIS FUNCTION IS ALMOST 
+    // THIS FUNCTION IS VERY GenAI
+    // It is a very fun graph so I made and kept it.
     template <typename Predictor>
     static void plot_decision_boundary_2d( 
             const Matrix& X,
@@ -190,7 +192,7 @@ public:
             throw std::invalid_argument("plot_decision_boundary_2d: Invalid feature indices.");
         }
 
-        // --- Compute means for non-plotted features to fix higher dimensions ---
+        // Compute means for non-plotted features to fix higher dimensions 
         Vector means(d, 0.0);
         for (std::size_t i = 0; i < n; ++i) {
             for (std::size_t j = 0; j < d; ++j) {
@@ -201,7 +203,7 @@ public:
             means[j] /= static_cast<double>(n);
         }
 
-        // --- Compute axis bounds with a 10% protective margin ---
+        // Compute axis bounds with a 10% protective margin 
         double x0_min = X[0][feature_x], x0_max = X[0][feature_x];
         double x1_min = X[0][feature_y], x1_max = X[0][feature_y];
         
@@ -217,7 +219,7 @@ public:
         x0_min -= margin_0; x0_max += margin_0;
         x1_min -= margin_1; x1_max += margin_1;
 
-        // --- Generate Evaluation Grid ---
+        // Generate Evaluation Grid 
         const double step0 = (x0_max - x0_min) / resolution;
         const double step1 = (x1_max - x1_min) / resolution;
 
@@ -270,7 +272,7 @@ public:
 
         detail::plt::figure_size(800, 700);
 
-        // --- Render Background Decision Regions ---
+        // Render Background Decision Regions
         for (std::size_t ki = 0; ki < K; ++ki) {
             const int cls = classes[ki];
             Vector gx, gy;
@@ -290,7 +292,7 @@ public:
             }
         }
 
-        // --- Render Ground-Truth Scatter Overlays ---
+        // Render Ground-Truth Scatter Overlays
         for (std::size_t ki = 0; ki < K; ++ki) {
             const int cls = classes[ki];
             Vector px, py;
