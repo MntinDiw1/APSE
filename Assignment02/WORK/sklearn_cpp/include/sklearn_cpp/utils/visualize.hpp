@@ -57,16 +57,7 @@ public:
     //  LINEAR REGRESSION PLOTS
     // ==================================================================
 
-    /**
-     * @brief Plots the raw 1-D feature data against the fitted regression line.
-     * 
-     * @param X         Feature matrix, expected shape [n_samples][1].
-     * @param y_true    Ground-truth target vector, shape [n_samples].
-     * @param y_pred    Predicted target vector, shape [n_samples].
-     * @param title     Figure title.
-     * @param save_path Optional file path to export the figure.
-     * @throws std::invalid_argument if X is not 1-Dimensional.
-     */
+    // Plots the raw 1-D feature data against the fitted regression line.
     static void plot_regression_fit(
             const Matrix& X,
             const Vector& y_true,
@@ -110,9 +101,7 @@ public:
         detail::save_and_show(save_path);
     }
 
-    /**
-     * @brief Plots actual vs predicted values. Points close to y=x imply high accuracy.
-     */
+    // Plots actual vs predicted values. Points close to y=x imply high accuracy.
     static void plot_actual_vs_predicted(
             const Vector& y_true,
             const Vector& y_pred,
@@ -139,9 +128,7 @@ public:
         detail::save_and_show(save_path);
     }
 
-    /**
-     * @brief Plots residuals (y_true - y_pred) to visually inspect homoscedasticity.
-     */
+    // Plots residuals (y_true - y_pred) to visually inspect homoscedasticity.
     static void plot_residuals(
             const Vector& y_true,
             const Vector& y_pred,
@@ -177,16 +164,7 @@ public:
     //  CLASSIFICATION / LOGISTIC REGRESSION PLOTS
     // ==================================================================
 
-    /**
-     * @brief Evaluates a classifier over a 2D mesh grid and plots the decision regions.
-     * 
-     * @param X          Feature matrix, expected shape [n_samples][2].
-     * @param y_true     Ground-truth class labels (encoded as doubles).
-     * @param predictor  Callable classifier wrapper taking a Matrix and returning a LabelVector.
-     * @param title      Figure title.
-     * @param resolution Grid resolution per axis (N x N grid).
-     * @param save_path  Optional file path to export the figure.
-     */
+    // Evaluates a classifier over a 2D mesh grid and plots the decision regions.
     static void plot_decision_boundary_2d(
             const Matrix& X,
             const Vector& y_true,
@@ -302,14 +280,7 @@ public:
         detail::save_and_show(save_path);
     }
 
-    /**
-     * @brief Renders a color-coded confusion matrix heatmap.
-     * 
-     * @param y_true    Ground-truth integer labels (encoded as doubles).
-     * @param y_pred    Predicted integer labels.
-     * @param title     Figure title.
-     * @param save_path Optional file path to export the figure.
-     */
+    // Renders a color-coded confusion matrix heatmap.
     static void plot_confusion_matrix(
             const Vector& y_true,
             const LabelVector& y_pred,
