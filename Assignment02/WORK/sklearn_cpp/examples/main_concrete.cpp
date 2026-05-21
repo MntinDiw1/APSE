@@ -6,13 +6,14 @@
 #include "sklearn_cpp/linear_model/linear_regression.hpp"
 
 int main() {
-    // Load the concrete dataset (has a header row)
+    // Load the concrete dataset
+    constexpr auto CSVPATH = "./data/concrete.csv"; // Path to the concrete CSV file (CHANGE THIS TO YOUR PATH)
+
     std::vector<std::vector<double>> X;
     std::vector<double> y;
-    sklearn_cpp::utils::CSVReader::load("./data/concrete.csv", true, X, y);
+    sklearn_cpp::utils::CSVReader::load(CSVPATH, true, X, y);
 
-    std::cout << "Loaded " << X.size() << " samples with "
-              << X[0].size() << " features\n";
+    std::cout << "Loaded " << X.size() << " samples with " << X[0].size() << " features" << std::endl;
 
     // Train linear regression using gradient descent
     sklearn_cpp::linear_model::LinearRegression model;
@@ -29,13 +30,13 @@ int main() {
     sklearn_cpp::utils::Visualizer::plot_actual_vs_predicted(
         y, y_pred,
         "Concrete Strength - Actual vs Predicted",
-        "./plots/concrete_actual_vs_predicted.png");
+        "./plots/concrete_actual_vs_predicted.png"); // CHANGE THIS TO YOUR DESIRED PATH
 
     // Plot residuals - should look like random noise around zero if the model is fitting well
     sklearn_cpp::utils::Visualizer::plot_residuals(
         y, y_pred,
         "Concrete Strength - Residuals",
-        "./plots/concrete_residuals.png");
+        "./plots/concrete_residuals.png");  // CHANGE THIS TO YOUR DESIRED PATH
 
     return 0;
 }

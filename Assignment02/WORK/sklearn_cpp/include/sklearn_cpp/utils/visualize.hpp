@@ -161,11 +161,13 @@ public:
     }
 
     // ==================================================================
-    //  CLASSIFICATION / LOGISTIC REGRESSION PLOTS
+    //  LOGISTIC REGRESSION PLOTS
     // ==================================================================
 
     // Evaluates a classifier over a 2D mesh grid and plots the decision regions.
-    static void plot_decision_boundary_2d(
+    // Did not implement this in the example, but it's a common and useful visualization for 2D datasets
+    // I develouped this thinking binary meant 2D.
+    static void plot_decision_boundary_2d( 
             const Matrix& X,
             const Vector& y_true,
             const std::function<LabelVector(const Matrix&)>& predictor,
