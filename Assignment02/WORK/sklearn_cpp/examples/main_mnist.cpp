@@ -7,31 +7,38 @@
 
 int main() {
     // Load the MNIST dataset
-    constexpr auto CSVPATH = "./data/mnist_micro.csv"; // Path to the MNIST CSV file (CHANGE THIS TO YOUR PATH)
+    constexpr auto TrainingCSVpath = "./data/mnist_train.csv"; // Path to the MNIST training CSV file (CHANGE THIS TO YOUR PATH)
+    constexpr auto TestCSVpath     = "./data/mnist_test.csv"; // Path to the MNIST test CSV file (CHANGE THIS TO YOUR PATH)
 
     std::vector<std::vector<double>> x;
     std::vector<double> y;
-    std::cout << "Loading data...\n";
-    sklearn_cpp::utils::CSVReader::load(CSVPATH, false, x, y);
+    std::cout << "Loading Training data..." << std::endl;
+    sklearn_cpp::utils::CSVReader::load(TrainingCSVpath, false, x, y);
 
-    std::cout << "Loaded " << x.size() << " samples with " << x[0].size() << " features" << std::endl;
+    std::vector<std::vector<double>> x_test;
+    std::vector<double> y_test;
+    std::cout << "Loading Test data..." << std::endl;
+    sklearn_cpp::utils::CSVReader::load(TestCSVpath, false, x_test, y_test);
+
+    std::cout << "Loaded Training data: " << x.size() << " samples with " << x[0].size() << " features" << std::endl;
+    std::cout << "Loaded Test data: " << x_test.size() << " samples with " << x_test[0].size() << " features" << std::endl;
 
     // Train multi-class logistic regression - fit() detects 10 classes and runs the softmax path
     // Using fewer iterations than the default because the dataset is much bigger
     sklearn_cpp::linear_model::LogisticRegression model(0.1, 500, 0.01);
-    std::cout << "Training...\n";
+    std::cout << "Training..." << std::endl;
     model.fit(x, y);
 
     // Get predictions to feed the plotting helper
-    std::vector<int> y_pred = model.predict(x);
+    std::vector<int> y_pred = model.predict(x_test);
 
-    // Report accuracy on the training set
-    double accuracy = model.score(x, y);
+    // Report accuracy on the test set
+    double accuracy = model.score(x_test, y_test);
     std::cout << "Accuracy: " << accuracy * 100 << "%" << std::endl;
 
     // Plot the 10x10 confusion matrix - most counts should land on the diagonal
     sklearn_cpp::utils::Visualizer::plot_confusion_matrix(
-        y, y_pred,
+        y_test, y_pred,
         "MNIST Digit Classification - Confusion Matrix",
         "./plots/mnist_confusion_matrix.png");  // CHANGE THIS TO YOUR DESIRED PATH
 

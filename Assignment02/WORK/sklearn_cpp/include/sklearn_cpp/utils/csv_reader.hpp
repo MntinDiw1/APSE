@@ -15,7 +15,7 @@ class CSVReader {
 public:
     // Load a CSV file into a feature matrix X and label vector y
     static void load(const std::string& filepath,           // path to the CSV file
-                     bool has_header = false,               // Set has_header to true if the first row contains column names default to no header 
+                     bool has_header,                       // Set has_header to true if the first row contains column names default to no header 
                      std::vector<std::vector<double>>& X,   // output feature matrix
                      std::vector<double>& y)                // output label vector
         {

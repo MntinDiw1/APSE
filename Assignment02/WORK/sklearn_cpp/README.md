@@ -1,6 +1,17 @@
-# sklearn_cpp
+# ENG3091 APSE Assignment 2: sklearn implementation in C++
 
-Header-only C++ implementation of `LinearRegression` and `LogisticRegression` for ENG3091 Assignment 2.
+Header-only C++ implementation of `LinearRegression` and `LogisticRegression`.
+
+## Implementation details: 
+- `linear_regression.hpp`: 
+    
+- `logistic_regression.hpp`:
+
+The system uses three utilities:
+- `csv_reader.hpp` converts CSV file line by line into `std::vector`, caple of handling CSVs of any dimention.
+- `metrics.hpp`
+- `visualize.hpp`
+
 
 Three applications:
 - `main_concrete.cpp` — LinearRegression on `concrete.csv` (R² ~ 0.6)
@@ -24,13 +35,6 @@ All three at once:
 ./bin/concrete.out
 ./bin/ecg.out
 ./bin/mnist.out
-```
-
-Or individually from the project root:
-```
-g++ -I ./include examples/main_concrete.cpp -o concrete.out
-g++ -I ./include examples/main_ecg.cpp -o ecg.out
-g++ -I ./include examples/main_mnist.cpp -o mnist.out
 ```
 
 ## Folder layout
