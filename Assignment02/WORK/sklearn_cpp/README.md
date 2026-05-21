@@ -59,6 +59,12 @@ https://gla-my.sharepoint.com/:f:/g/personal/2917444a_student_gla_ac_uk/IgDTXauK
 
 Drop the downloaded files directly into the `./data/` folder.
 
+### MNIST dataset variants
+
+There are several MNIST files of different sizes. They all contain the same kind of data (28×28 grayscale digit images flattened into rows of 784 pixel values plus a label column) — they just differ in how many samples are included. Larger files give better accuracy but take longer to train; smaller ones are useful for quick debugging.
+
+`main_mnist.cpp` uses `mnist_train.csv` and `mnist_test.csv` by default.
+
 ### Step 2: Build the executables
 
 From the project root, make the build script executable (only needed once) and run it:
