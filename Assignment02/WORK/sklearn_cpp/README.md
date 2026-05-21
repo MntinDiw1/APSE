@@ -67,7 +67,7 @@ chmod +x build.sh
 ./build.sh
 ```
 
-This compiles all three programs and places them in the `./bin/` folder.
+This compiles all three programs and puts them in the `./bin/` folder.
 
 ### Step 3: Run each program
 
@@ -77,7 +77,7 @@ This compiles all three programs and places them in the `./bin/` folder.
 ./bin/mnist.out
 ```
 
-Each program loads its dataset, trains the model, prints the score, and saves evaluation plots to `./plots/`.
+Each program loads a dataset, trains the model, prints the score, and saves plots to `./plots/`.
 
 ## Dependencies
 
@@ -90,4 +90,4 @@ If `python3-config` is not found when running `build.sh`, this is the package th
 
 ## Use of generative AI
 
-Generative AI was used to scaffold the project structure, draft the plotting wrapper around `matplotlibcpp.h`, and assist with debugging. The core algorithms (gradient descent for linear regression, sigmoid and softmax classifiers for logistic regression) were written and tuned by the team.
+Generative AI helped scaffold the project structure and assist with debugging. All uses of AI have been explicitly declared. 
